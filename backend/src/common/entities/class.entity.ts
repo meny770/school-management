@@ -1,12 +1,13 @@
 import {
-  Entity,
-  Column,
-  PrimaryGeneratedColumn,
-  CreateDateColumn,
-  UpdateDateColumn,
-  OneToMany,
-  ManyToOne,
-  JoinColumn,
+	Entity,
+	Column,
+	PrimaryGeneratedColumn,
+	CreateDateColumn,
+	UpdateDateColumn,
+	OneToMany,
+	ManyToOne,
+	JoinColumn,
+	Generated,
 } from 'typeorm';
 import { Student } from './student.entity';
 import { Lesson } from './lesson.entity';
@@ -14,33 +15,36 @@ import { User } from './user.entity';
 
 @Entity('classes')
 export class Class {
-  @PrimaryGeneratedColumn('uuid')
-  id: string;
+	@PrimaryGeneratedColumn()
+	id: number;
 
-  @Column({ length: 100 })
-  name: string;
+	@Column()
+	@Generated('uuid')
+	uuid: string;
 
-  @Column({ name: 'grade_level', type: 'int' })
-  gradeLevel: number;
+	@Column({ length: 100 })
+	name: string;
 
-  @Column({ name: 'homeroom_teacher_id', nullable: true })
-  homeroomTeacherId: string;
+	@Column({ name: 'grade_level', type: 'int' })
+	gradeLevel: number;
 
-  @CreateDateColumn({ name: 'created_at' })
-  createdAt: Date;
+	@Column({ name: 'homeroom_teacher_id', nullable: true })
+	homeroomTeacherId: number;
 
-  @UpdateDateColumn({ name: 'updated_at' })
-  updatedAt: Date;
+	@CreateDateColumn({ name: 'created_at' })
+	createdAt: Date;
 
-  // Relations
-  @ManyToOne(() => User, { nullable: true })
-  @JoinColumn({ name: 'homeroom_teacher_id' })
-  homeroomTeacher: User;
+	@UpdateDateColumn({ name: 'updated_at' })
+	updatedAt: Date;
 
-  @OneToMany(() => Student, (student) => student.class)
-  students: Student[];
+	// Relations
+	@ManyToOne(() => User, { nullable: true })
+	@JoinColumn({ name: 'homeroom_teacher_id' })
+	homeroomTeacher: User;
 
-  @OneToMany(() => Lesson, (lesson) => lesson.class)
-  lessons: Lesson[];
+	@OneToMany(() => Student, (student) => student.class)
+	students: Student[];
+
+	@OneToMany(() => Lesson, (lesson) => lesson.class)
+	lessons: Lesson[];
 }
-

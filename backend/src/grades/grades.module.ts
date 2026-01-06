@@ -5,11 +5,13 @@ import { GradesController } from './grades.controller';
 import { Grade } from './entities/grade.entity';
 import { CommentTemplate } from './entities/comment-template.entity';
 
+import { User } from '../common/entities/user.entity';
+import { Student } from '../common/entities/student.entity';
+
 @Module({
-  imports: [TypeOrmModule.forFeature([Grade, CommentTemplate])],
-  controllers: [GradesController],
-  providers: [GradesService],
-  exports: [GradesService],
+	imports: [TypeOrmModule.forFeature([Grade, CommentTemplate, User, Student])],
+	controllers: [GradesController],
+	providers: [GradesService],
+	exports: [GradesService],
 })
 export class GradesModule {}
-

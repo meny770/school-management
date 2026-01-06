@@ -1,10 +1,11 @@
 import {
-  Entity,
-  Column,
-  PrimaryGeneratedColumn,
-  CreateDateColumn,
-  UpdateDateColumn,
-  OneToMany,
+	Entity,
+	Column,
+	PrimaryGeneratedColumn,
+	CreateDateColumn,
+	UpdateDateColumn,
+	OneToMany,
+	Generated,
 } from 'typeorm';
 import { Exclude } from 'class-transformer';
 import { UserRole } from '../enums';
@@ -13,37 +14,40 @@ import { EducationalEvent } from '../../events/entities/educational-event.entity
 
 @Entity('users')
 export class User {
-  @PrimaryGeneratedColumn('uuid')
-  id: string;
+	@PrimaryGeneratedColumn()
+	id: number;
 
-  @Column({ length: 100 })
-  name: string;
+	@Column()
+	@Generated('uuid')
+	uuid: string;
 
-  @Column({ unique: true, length: 100 })
-  email: string;
+	@Column({ length: 100 })
+	name: string;
 
-  @Column({
-    type: 'enum',
-    enum: UserRole,
-    default: UserRole.TEACHER,
-  })
-  role: UserRole;
+	@Column({ unique: true, length: 100 })
+	email: string;
 
-  @Column()
-  @Exclude()
-  password: string;
+	@Column({
+		type: 'enum',
+		enum: UserRole,
+		default: UserRole.TEACHER,
+	})
+	role: UserRole;
 
-  @CreateDateColumn({ name: 'created_at' })
-  createdAt: Date;
+	@Column()
+	@Exclude()
+	password: string;
 
-  @UpdateDateColumn({ name: 'updated_at' })
-  updatedAt: Date;
+	@CreateDateColumn({ name: 'created_at' })
+	createdAt: Date;
 
-  // Relations
-  @OneToMany(() => Grade, (grade) => grade.teacher)
-  grades: Grade[];
+	@UpdateDateColumn({ name: 'updated_at' })
+	updatedAt: Date;
 
-  @OneToMany(() => EducationalEvent, (event) => event.teacher)
-  events: EducationalEvent[];
+	// Relations
+	@OneToMany(() => Grade, (grade) => grade.teacher)
+	grades: Grade[];
+
+	@OneToMany(() => EducationalEvent, (event) => event.teacher)
+	events: EducationalEvent[];
 }
-

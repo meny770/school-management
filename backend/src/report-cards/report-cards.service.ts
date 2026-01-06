@@ -3,6 +3,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { ReportCard } from './entities/report-card.entity';
 import { ReportCardLine } from './entities/report-card-line.entity';
+import { Student } from '../common/entities/student.entity';
 import {
 	CreateReportCardDto,
 	AddReportCardLinesDto,
@@ -16,11 +17,26 @@ export class ReportCardsService {
 		@InjectRepository(ReportCard)
 		private reportCardRepository: Repository<ReportCard>,
 		@InjectRepository(ReportCardLine)
-		private reportCardLineRepository: Repository<ReportCardLine>
+		private reportCardLineRepository: Repository<ReportCardLine>,
+		@InjectRepository(Student)
+		private studentRepository: Repository<Student>
 	) {}
 
 	async create(createReportCardDto: CreateReportCardDto): Promise<ReportCard> {
-		const reportCard = this.reportCardRepository.create(createReportCardDto);
+		const student = await this.studentRepository.findOne({
+			where: { uuid: createReportCardDto.studentId },
+		});
+
+		if (!student) {
+			throw new NotFoundException(
+				`Student with ID "${createReportCardDto.studentId}" not found`
+			);
+		}
+
+		const reportCard = this.reportCardRepository.create({
+			...createReportCardDto,
+			studentId: student.id,
+		});
 		return this.reportCardRepository.save(reportCard);
 	}
 
@@ -29,7 +45,7 @@ export class ReportCardsService {
 		addLinesDto: AddReportCardLinesDto
 	): Promise<ReportCard> {
 		const reportCard = await this.reportCardRepository.findOne({
-			where: { id: reportCardId },
+			where: { uuid: reportCardId },
 			relations: ['lines'],
 		});
 
@@ -42,7 +58,7 @@ export class ReportCardsService {
 		const lines = addLinesDto.lines.map((lineDto) =>
 			this.reportCardLineRepository.create({
 				...lineDto,
-				reportCardId: reportCardId,
+				reportCardId: reportCard.id,
 			})
 		);
 
@@ -50,7 +66,7 @@ export class ReportCardsService {
 
 		const reportCardUpdated = await this.reportCardRepository
 			.findOne({
-				where: { id: reportCardId },
+				where: { id: reportCard.id },
 				relations: ['lines', 'student'],
 			})
 			.catch(() => {
@@ -84,7 +100,7 @@ export class ReportCardsService {
 
 	async findOne(id: string): Promise<ReportCard> {
 		const reportCard = await this.reportCardRepository.findOne({
-			where: { id },
+			where: { uuid: id },
 			relations: ['student', 'lines'],
 		});
 

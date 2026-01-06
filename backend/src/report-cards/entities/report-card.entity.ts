@@ -1,12 +1,13 @@
 import {
-  Entity,
-  Column,
-  PrimaryGeneratedColumn,
-  CreateDateColumn,
-  UpdateDateColumn,
-  ManyToOne,
-  OneToMany,
-  JoinColumn,
+	Entity,
+	Column,
+	PrimaryGeneratedColumn,
+	CreateDateColumn,
+	UpdateDateColumn,
+	ManyToOne,
+	OneToMany,
+	JoinColumn,
+	Generated,
 } from 'typeorm';
 import { ReportCardStatus } from '../../common/enums';
 import { Student } from '../../common/entities/student.entity';
@@ -14,42 +15,45 @@ import { ReportCardLine } from './report-card-line.entity';
 
 @Entity('report_cards')
 export class ReportCard {
-  @PrimaryGeneratedColumn('uuid')
-  id: string;
+	@PrimaryGeneratedColumn()
+	id: number;
 
-  @Column({ name: 'student_id' })
-  studentId: string;
+	@Column()
+	@Generated('uuid')
+	uuid: string;
 
-  @Column({ type: 'int' })
-  year: number;
+	@Column({ name: 'student_id' })
+	studentId: number;
 
-  @Column({ type: 'int' })
-  semester: number;
+	@Column({ type: 'int' })
+	year: number;
 
-  @Column({
-    type: 'enum',
-    enum: ReportCardStatus,
-    default: ReportCardStatus.DRAFT,
-  })
-  status: ReportCardStatus;
+	@Column({ type: 'int' })
+	semester: number;
 
-  @CreateDateColumn({ name: 'created_at' })
-  createdAt: Date;
+	@Column({
+		type: 'enum',
+		enum: ReportCardStatus,
+		default: ReportCardStatus.DRAFT,
+	})
+	status: ReportCardStatus;
 
-  @UpdateDateColumn({ name: 'updated_at' })
-  updatedAt: Date;
+	@CreateDateColumn({ name: 'created_at' })
+	createdAt: Date;
 
-  @Column({ name: 'published_at', type: 'timestamp', nullable: true })
-  publishedAt: Date;
+	@UpdateDateColumn({ name: 'updated_at' })
+	updatedAt: Date;
 
-  // Relations
-  @ManyToOne(() => Student, (student) => student.reportCards)
-  @JoinColumn({ name: 'student_id' })
-  student: Student;
+	@Column({ name: 'published_at', type: 'timestamp', nullable: true })
+	publishedAt: Date;
 
-  @OneToMany(() => ReportCardLine, (line) => line.reportCard, {
-    cascade: true,
-  })
-  lines: ReportCardLine[];
+	// Relations
+	@ManyToOne(() => Student, (student) => student.reportCards)
+	@JoinColumn({ name: 'student_id' })
+	student: Student;
+
+	@OneToMany(() => ReportCardLine, (line) => line.reportCard, {
+		cascade: true,
+	})
+	lines: ReportCardLine[];
 }
-

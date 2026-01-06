@@ -3,6 +3,8 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Grade } from './entities/grade.entity';
 import { CommentTemplate } from './entities/comment-template.entity';
+import { User } from '../common/entities/user.entity';
+import { Student } from '../common/entities/student.entity';
 import {
 	CreateGradeDto,
 	CreateCommentTemplateDto,
@@ -15,16 +17,39 @@ export class GradesService {
 		@InjectRepository(Grade)
 		private gradeRepository: Repository<Grade>,
 		@InjectRepository(CommentTemplate)
-		private commentTemplateRepository: Repository<CommentTemplate>
+		private commentTemplateRepository: Repository<CommentTemplate>,
+		@InjectRepository(User)
+		private userRepository: Repository<User>,
+		@InjectRepository(Student)
+		private studentRepository: Repository<Student>
 	) {}
 
 	async createGrade(
 		createGradeDto: CreateGradeDto,
 		teacherId: string
 	): Promise<Grade> {
+		const teacher = await this.userRepository.findOne({
+			where: { uuid: teacherId },
+		});
+
+		if (!teacher) {
+			throw new NotFoundException(`Teacher with ID "${teacherId}" not found`);
+		}
+
+		const student = await this.studentRepository.findOne({
+			where: { uuid: createGradeDto.studentId },
+		});
+
+		if (!student) {
+			throw new NotFoundException(
+				`Student with ID "${createGradeDto.studentId}" not found`
+			);
+		}
+
 		const grade = this.gradeRepository.create({
 			...createGradeDto,
-			teacherId,
+			teacherId: teacher.id,
+			studentId: student.id,
 			commentTemplateIds: createGradeDto.commentTemplateIds
 				? JSON.stringify(createGradeDto.commentTemplateIds)
 				: undefined,
@@ -40,15 +65,22 @@ export class GradesService {
 			.leftJoinAndSelect('grade.teacher', 'teacher');
 
 		if (query.studentId) {
-			queryBuilder.andWhere('grade.studentId = :studentId', {
+			// Assuming query.studentId is UUID
+			queryBuilder.andWhere('student.uuid = :studentId', {
 				studentId: query.studentId,
 			});
 		}
 
 		if (query.classId) {
-			queryBuilder.andWhere('student.classId = :classId', {
-				classId: query.classId,
-			});
+			// Assuming query.classId is UUID (if we changed Class ID to UUID)
+			// But wait, Class ID is also refactored.
+			// So we need to join class and check uuid.
+			// Student has class relation.
+			queryBuilder
+				.leftJoin('student.class', 'class')
+				.andWhere('class.uuid = :classId', {
+					classId: query.classId,
+				});
 		}
 
 		if (query.subject) {
@@ -78,7 +110,7 @@ export class GradesService {
 
 	async findCommentTemplateById(id: string): Promise<CommentTemplate> {
 		const template = await this.commentTemplateRepository.findOne({
-			where: { id },
+			where: { uuid: id },
 		});
 
 		if (!template) {
@@ -89,9 +121,7 @@ export class GradesService {
 	}
 
 	async deleteCommentTemplate(id: string): Promise<void> {
-		const result = await this.commentTemplateRepository.delete(id);
-		if (result.affected === 0) {
-			throw new NotFoundException(`Comment template with ID ${id} not found`);
-		}
+		const template = await this.findCommentTemplateById(id);
+		await this.commentTemplateRepository.delete(template.id);
 	}
 }

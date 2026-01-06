@@ -1,30 +1,34 @@
 import {
-  Entity,
-  Column,
-  PrimaryGeneratedColumn,
-  CreateDateColumn,
-  UpdateDateColumn,
+	Entity,
+	Column,
+	PrimaryGeneratedColumn,
+	CreateDateColumn,
+	UpdateDateColumn,
+	Generated,
 } from 'typeorm';
 import { CommentCategory } from '../../common/enums';
 
 @Entity('comment_templates')
 export class CommentTemplate {
-  @PrimaryGeneratedColumn('uuid')
-  id: string;
+	@PrimaryGeneratedColumn()
+	id: number;
 
-  @Column({
-    type: 'enum',
-    enum: CommentCategory,
-  })
-  category: CommentCategory;
+	@Column()
+	@Generated('uuid')
+	uuid: string;
 
-  @Column({ type: 'text' })
-  text: string;
+	@Column({
+		type: 'enum',
+		enum: CommentCategory,
+	})
+	category: CommentCategory;
 
-  @CreateDateColumn({ name: 'created_at' })
-  createdAt: Date;
+	@Column({ type: 'text' })
+	text: string;
 
-  @UpdateDateColumn({ name: 'updated_at' })
-  updatedAt: Date;
+	@CreateDateColumn({ name: 'created_at' })
+	createdAt: Date;
+
+	@UpdateDateColumn({ name: 'updated_at' })
+	updatedAt: Date;
 }
-

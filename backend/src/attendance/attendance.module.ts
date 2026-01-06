@@ -5,11 +5,12 @@ import { AttendanceController } from './attendance.controller';
 import { Attendance } from './entities/attendance.entity';
 import { Lesson } from '../common/entities/lesson.entity';
 
+import { Student } from '../common/entities/student.entity';
+
 @Module({
-  imports: [TypeOrmModule.forFeature([Attendance, Lesson])],
-  controllers: [AttendanceController],
-  providers: [AttendanceService],
-  exports: [AttendanceService],
+	imports: [TypeOrmModule.forFeature([Attendance, Lesson, Student])],
+	controllers: [AttendanceController],
+	providers: [AttendanceService],
+	exports: [AttendanceService],
 })
 export class AttendanceModule {}
-

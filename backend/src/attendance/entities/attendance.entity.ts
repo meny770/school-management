@@ -1,12 +1,13 @@
 import {
-  Entity,
-  Column,
-  PrimaryGeneratedColumn,
-  CreateDateColumn,
-  UpdateDateColumn,
-  ManyToOne,
-  JoinColumn,
-  Index,
+	Entity,
+	Column,
+	PrimaryGeneratedColumn,
+	CreateDateColumn,
+	UpdateDateColumn,
+	ManyToOne,
+	JoinColumn,
+	Index,
+	Generated,
 } from 'typeorm';
 import { AttendanceStatus } from '../../common/enums';
 import { Student } from '../../common/entities/student.entity';
@@ -15,44 +16,47 @@ import { Lesson } from '../../common/entities/lesson.entity';
 @Entity('attendances')
 @Index(['lessonId', 'studentId'], { unique: true })
 export class Attendance {
-  @PrimaryGeneratedColumn('uuid')
-  id: string;
+	@PrimaryGeneratedColumn()
+	id: number;
 
-  @Column({ name: 'lesson_id' })
-  lessonId: string;
+	@Column()
+	@Generated('uuid')
+	uuid: string;
 
-  @Column({ name: 'student_id' })
-  studentId: string;
+	@Column({ name: 'lesson_id' })
+	lessonId: number;
 
-  @Column({ type: 'date' })
-  date: Date;
+	@Column({ name: 'student_id' })
+	studentId: number;
 
-  @Column({
-    type: 'enum',
-    enum: AttendanceStatus,
-    default: AttendanceStatus.PRESENT,
-  })
-  status: AttendanceStatus;
+	@Column({ type: 'date' })
+	date: Date;
 
-  @Column({ name: 'is_justified', default: false })
-  isJustified: boolean;
+	@Column({
+		type: 'enum',
+		enum: AttendanceStatus,
+		default: AttendanceStatus.PRESENT,
+	})
+	status: AttendanceStatus;
 
-  @Column({ type: 'text', nullable: true })
-  comment: string;
+	@Column({ name: 'is_justified', default: false })
+	isJustified: boolean;
 
-  @CreateDateColumn({ name: 'created_at' })
-  createdAt: Date;
+	@Column({ type: 'text', nullable: true })
+	comment: string;
 
-  @UpdateDateColumn({ name: 'updated_at' })
-  updatedAt: Date;
+	@CreateDateColumn({ name: 'created_at' })
+	createdAt: Date;
 
-  // Relations
-  @ManyToOne(() => Lesson, (lesson) => lesson.attendances)
-  @JoinColumn({ name: 'lesson_id' })
-  lesson: Lesson;
+	@UpdateDateColumn({ name: 'updated_at' })
+	updatedAt: Date;
 
-  @ManyToOne(() => Student, (student) => student.attendances)
-  @JoinColumn({ name: 'student_id' })
-  student: Student;
+	// Relations
+	@ManyToOne(() => Lesson, (lesson) => lesson.attendances)
+	@JoinColumn({ name: 'lesson_id' })
+	lesson: Lesson;
+
+	@ManyToOne(() => Student, (student) => student.attendances)
+	@JoinColumn({ name: 'student_id' })
+	student: Student;
 }
-

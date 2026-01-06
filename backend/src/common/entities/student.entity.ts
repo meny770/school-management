@@ -1,12 +1,13 @@
 import {
-  Entity,
-  Column,
-  PrimaryGeneratedColumn,
-  CreateDateColumn,
-  UpdateDateColumn,
-  ManyToOne,
-  OneToMany,
-  JoinColumn,
+	Entity,
+	Column,
+	PrimaryGeneratedColumn,
+	CreateDateColumn,
+	UpdateDateColumn,
+	ManyToOne,
+	OneToMany,
+	JoinColumn,
+	Generated,
 } from 'typeorm';
 import { Class } from './class.entity';
 import { Attendance } from '../../attendance/entities/attendance.entity';
@@ -16,46 +17,49 @@ import { ReportCard } from '../../report-cards/entities/report-card.entity';
 
 @Entity('students')
 export class Student {
-  @PrimaryGeneratedColumn('uuid')
-  id: string;
+	@PrimaryGeneratedColumn()
+	id: number;
 
-  @Column({ name: 'first_name', length: 100 })
-  firstName: string;
+	@Column()
+	@Generated('uuid')
+	uuid: string;
 
-  @Column({ name: 'last_name', length: 100 })
-  lastName: string;
+	@Column({ name: 'first_name', length: 100 })
+	firstName: string;
 
-  @Column({ name: 'class_id', nullable: true })
-  classId: string;
+	@Column({ name: 'last_name', length: 100 })
+	lastName: string;
 
-  @CreateDateColumn({ name: 'created_at' })
-  createdAt: Date;
+	@Column({ name: 'class_id', nullable: true })
+	classId: number;
 
-  @UpdateDateColumn({ name: 'updated_at' })
-  updatedAt: Date;
+	@CreateDateColumn({ name: 'created_at' })
+	createdAt: Date;
 
-  // Relations
-  @ManyToOne(() => Class, (classEntity) => classEntity.students, {
-    nullable: true,
-  })
-  @JoinColumn({ name: 'class_id' })
-  class: Class;
+	@UpdateDateColumn({ name: 'updated_at' })
+	updatedAt: Date;
 
-  @OneToMany(() => Attendance, (attendance) => attendance.student)
-  attendances: Attendance[];
+	// Relations
+	@ManyToOne(() => Class, (classEntity) => classEntity.students, {
+		nullable: true,
+	})
+	@JoinColumn({ name: 'class_id' })
+	class: Class;
 
-  @OneToMany(() => Grade, (grade) => grade.student)
-  grades: Grade[];
+	@OneToMany(() => Attendance, (attendance) => attendance.student)
+	attendances: Attendance[];
 
-  @OneToMany(() => EducationalEvent, (event) => event.student)
-  events: EducationalEvent[];
+	@OneToMany(() => Grade, (grade) => grade.student)
+	grades: Grade[];
 
-  @OneToMany(() => ReportCard, (reportCard) => reportCard.student)
-  reportCards: ReportCard[];
+	@OneToMany(() => EducationalEvent, (event) => event.student)
+	events: EducationalEvent[];
 
-  // Virtual property
-  get fullName(): string {
-    return `${this.firstName} ${this.lastName}`;
-  }
+	@OneToMany(() => ReportCard, (reportCard) => reportCard.student)
+	reportCards: ReportCard[];
+
+	// Virtual property
+	get fullName(): string {
+		return `${this.firstName} ${this.lastName}`;
+	}
 }
-

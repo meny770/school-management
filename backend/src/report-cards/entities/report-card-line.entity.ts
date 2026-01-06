@@ -1,40 +1,44 @@
 import {
-  Entity,
-  Column,
-  PrimaryGeneratedColumn,
-  CreateDateColumn,
-  UpdateDateColumn,
-  ManyToOne,
-  JoinColumn,
+	Entity,
+	Column,
+	PrimaryGeneratedColumn,
+	CreateDateColumn,
+	UpdateDateColumn,
+	ManyToOne,
+	JoinColumn,
+	Generated,
 } from 'typeorm';
 import { ReportCard } from './report-card.entity';
 
 @Entity('report_card_lines')
 export class ReportCardLine {
-  @PrimaryGeneratedColumn('uuid')
-  id: string;
+	@PrimaryGeneratedColumn()
+	id: number;
 
-  @Column({ name: 'report_card_id' })
-  reportCardId: string;
+	@Column()
+	@Generated('uuid')
+	uuid: string;
 
-  @Column({ length: 100 })
-  subject: string;
+	@Column({ name: 'report_card_id' })
+	reportCardId: number;
 
-  @Column({ name: 'final_grade', type: 'decimal', precision: 5, scale: 2 })
-  finalGrade: number;
+	@Column({ length: 100 })
+	subject: string;
 
-  @Column({ type: 'text', nullable: true })
-  comments: string;
+	@Column({ name: 'final_grade', type: 'decimal', precision: 5, scale: 2 })
+	finalGrade: number;
 
-  @CreateDateColumn({ name: 'created_at' })
-  createdAt: Date;
+	@Column({ type: 'text', nullable: true })
+	comments: string;
 
-  @UpdateDateColumn({ name: 'updated_at' })
-  updatedAt: Date;
+	@CreateDateColumn({ name: 'created_at' })
+	createdAt: Date;
 
-  // Relations
-  @ManyToOne(() => ReportCard, (reportCard) => reportCard.lines)
-  @JoinColumn({ name: 'report_card_id' })
-  reportCard: ReportCard;
+	@UpdateDateColumn({ name: 'updated_at' })
+	updatedAt: Date;
+
+	// Relations
+	@ManyToOne(() => ReportCard, (reportCard) => reportCard.lines)
+	@JoinColumn({ name: 'report_card_id' })
+	reportCard: ReportCard;
 }
-

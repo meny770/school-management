@@ -6,17 +6,22 @@ import {
 	UpdateDateColumn,
 	ManyToOne,
 	JoinColumn,
+	Generated,
 } from 'typeorm';
 import { Student } from '../../common/entities/student.entity';
 import { User } from '../../common/entities/user.entity';
 
 @Entity('grades')
 export class Grade {
-	@PrimaryGeneratedColumn('uuid')
-	id: string;
+	@PrimaryGeneratedColumn()
+	id: number;
+
+	@Column()
+	@Generated('uuid')
+	uuid: string;
 
 	@Column({ name: 'student_id' })
-	studentId: string;
+	studentId: number;
 
 	@Column({ length: 100 })
 	subject: string;
@@ -40,7 +45,7 @@ export class Grade {
 	improvementNote: string | null;
 
 	@Column({ name: 'teacher_id' })
-	teacherId: string;
+	teacherId: number;
 
 	@Column({ type: 'date' })
 	date: Date;

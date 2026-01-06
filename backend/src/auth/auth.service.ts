@@ -45,7 +45,7 @@ export class AuthService {
 		return {
 			accessToken,
 			user: {
-				id: user.id,
+				id: user.uuid,
 				name: user.name,
 				email: user.email,
 				role: user.role,
@@ -58,22 +58,14 @@ export class AuthService {
 		const user = await this.userRepository.findOne({
 			where: { email: loginDto.email },
 		});
-		console.log(user);
-
 		if (!user) {
 			throw new UnauthorizedException('Invalid credentials');
 		}
-
-		console.log(loginDto.password);
-		console.log(user.password);
 		// Verify password
-		// const isPasswordValid = await bcrypt.compare(
-		// 	loginDto.password,
-		// 	user.password
-		// );
-
-		const isPasswordValid = loginDto.password === user.password;
-		console.log(isPasswordValid);
+		const isPasswordValid = await bcrypt.compare(
+			loginDto.password,
+			user.password
+		);
 
 		if (!isPasswordValid) {
 			throw new UnauthorizedException('Invalid credentials');
@@ -81,12 +73,11 @@ export class AuthService {
 
 		// Generate JWT
 		const accessToken = this.generateToken(user);
-		console.log(accessToken);
 
 		return {
 			accessToken,
 			user: {
-				id: user.id,
+				id: user.uuid,
 				name: user.name,
 				email: user.email,
 				role: user.role,
@@ -96,7 +87,7 @@ export class AuthService {
 
 	private generateToken(user: User): string {
 		const payload = {
-			sub: user.id,
+			sub: user.uuid,
 			email: user.email,
 			role: user.role,
 		};
@@ -105,6 +96,6 @@ export class AuthService {
 	}
 
 	async validateUser(userId: string): Promise<User | null> {
-		return this.userRepository.findOne({ where: { id: userId } });
+		return this.userRepository.findOne({ where: { uuid: userId } });
 	}
 }

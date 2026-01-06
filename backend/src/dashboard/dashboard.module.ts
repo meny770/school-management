@@ -6,10 +6,13 @@ import { Attendance } from '../attendance/entities/attendance.entity';
 import { Grade } from '../grades/entities/grade.entity';
 import { EducationalEvent } from '../events/entities/educational-event.entity';
 
+import { User } from '../common/entities/user.entity';
+
 @Module({
-  imports: [TypeOrmModule.forFeature([Attendance, Grade, EducationalEvent])],
-  controllers: [DashboardController],
-  providers: [DashboardService],
+	imports: [
+		TypeOrmModule.forFeature([Attendance, Grade, EducationalEvent, User]),
+	],
+	controllers: [DashboardController],
+	providers: [DashboardService],
 })
 export class DashboardModule {}
-
