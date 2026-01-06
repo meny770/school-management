@@ -5,6 +5,7 @@ import { Attendance } from '../attendance/entities/attendance.entity';
 import { Grade } from '../grades/entities/grade.entity';
 import { EducationalEvent } from '../events/entities/educational-event.entity';
 import { User } from '../common/entities/user.entity';
+import { errorHandler } from '../utils';
 
 export interface TeacherDashboardData {
 	missingAttendanceCount: number;
@@ -27,9 +28,17 @@ export class DashboardService {
 	) {}
 
 	async getTeacherDashboard(teacherId: string): Promise<TeacherDashboardData> {
-		const teacher = await this.userRepository.findOne({
-			where: { uuid: teacherId },
-		});
+		const teacher = await this.userRepository
+			.findOne({ where: { uuid: teacherId } })
+			.catch((error) =>
+				errorHandler(error, {
+					filePath: 'backend/src/dashboard/dashboard.service.ts',
+					functionName: 'getTeacherDashboard',
+					errorStatusObject: NotFoundException,
+					message: `Teacher not found: ${teacherId}`,
+					title: 'Teacher Lookup Failed',
+				})
+			);
 
 		if (!teacher) {
 			throw new NotFoundException(`Teacher with ID "${teacherId}" not found`);
@@ -39,25 +48,31 @@ export class DashboardService {
 		const sevenDaysAgo = new Date(today);
 		sevenDaysAgo.setDate(today.getDate() - 7);
 
-		// TODO: Implement proper queries based on teacher's classes
-		// For MVP, return mock/aggregated data
-
 		// Count recent grades by this teacher
-		const recentGradesCount = await this.gradeRepository.count({
-			where: {
-				teacherId: teacher.id,
-			},
-		});
+		const recentGradesCount = await this.gradeRepository
+			.count({ where: { teacherId: teacher.id } })
+			.catch((error) =>
+				errorHandler(error, {
+					filePath: 'backend/src/dashboard/dashboard.service.ts',
+					functionName: 'getTeacherDashboard',
+					message: `Failed to count grades for teacher ${teacherId}`,
+					title: 'Grade Count Failed',
+				})
+			);
 
 		// Count recent events by this teacher
-		const recentEventsCount = await this.eventsRepository.count({
-			where: {
-				teacherId: teacher.id,
-			},
-		});
+		const recentEventsCount = await this.eventsRepository
+			.count({ where: { teacherId: teacher.id } })
+			.catch((error) =>
+				errorHandler(error, {
+					filePath: 'backend/src/dashboard/dashboard.service.ts',
+					functionName: 'getTeacherDashboard',
+					message: `Failed to count events for teacher ${teacherId}`,
+					title: 'Event Count Failed',
+				})
+			);
 
 		// TODO: Count missing attendance items
-		// This would require complex logic to find lessons without attendance records
 		const missingAttendanceCount = 0; // Placeholder
 
 		// Count high severity events
@@ -66,7 +81,15 @@ export class DashboardService {
 			.where('event.teacherId = :teacherId', { teacherId: teacher.id })
 			.andWhere('event.severity = :severity', { severity: 'HIGH' })
 			.andWhere('event.date >= :sevenDaysAgo', { sevenDaysAgo })
-			.getCount();
+			.getCount()
+			.catch((error) =>
+				errorHandler(error, {
+					filePath: 'backend/src/dashboard/dashboard.service.ts',
+					functionName: 'getTeacherDashboard',
+					message: `Failed to count high severity events for teacher ${teacherId}`,
+					title: 'High Severity Event Count Failed',
+				})
+			);
 
 		return {
 			missingAttendanceCount,

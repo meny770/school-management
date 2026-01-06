@@ -2,6 +2,7 @@ import {
 	Injectable,
 	UnauthorizedException,
 	ConflictException,
+	BadRequestException,
 } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { InjectRepository } from '@nestjs/typeorm';
@@ -9,6 +10,7 @@ import { Repository } from 'typeorm';
 import * as bcrypt from 'bcrypt';
 import { User } from '../common/entities/user.entity';
 import { LoginDto, RegisterDto, AuthResponseDto } from './dto';
+import { errorHandler } from '../utils';
 
 @Injectable()
 export class AuthService {
@@ -20,9 +22,16 @@ export class AuthService {
 
 	async register(registerDto: RegisterDto): Promise<AuthResponseDto> {
 		// Check if user already exists
-		const existingUser = await this.userRepository.findOne({
-			where: { email: registerDto.email },
-		});
+		const existingUser = await this.userRepository
+			.findOne({ where: { email: registerDto.email } })
+			.catch((error) =>
+				errorHandler(error, {
+					filePath: 'backend/src/auth/auth.service.ts',
+					functionName: 'register',
+					message: `Failed to check existing user: ${registerDto.email}`,
+					title: 'User Lookup Failed',
+				})
+			);
 
 		if (existingUser) {
 			throw new ConflictException('User with this email already exists');
@@ -37,7 +46,15 @@ export class AuthService {
 			password: hashedPassword,
 		});
 
-		await this.userRepository.save(user);
+		await this.userRepository.save(user).catch((error) =>
+			errorHandler(error, {
+				filePath: 'backend/src/auth/auth.service.ts',
+				functionName: 'register',
+				errorStatusObject: BadRequestException,
+				message: `Failed to create user: ${registerDto.email}`,
+				title: 'User Creation Failed',
+			})
+		);
 
 		// Generate JWT
 		const accessToken = this.generateToken(user);
@@ -55,12 +72,22 @@ export class AuthService {
 
 	async login(loginDto: LoginDto): Promise<AuthResponseDto> {
 		// Find user
-		const user = await this.userRepository.findOne({
-			where: { email: loginDto.email },
-		});
+		const user = await this.userRepository
+			.findOne({ where: { email: loginDto.email } })
+			.catch((error) =>
+				errorHandler(error, {
+					filePath: 'backend/src/auth/auth.service.ts',
+					functionName: 'login',
+					errorStatusObject: UnauthorizedException,
+					message: `Failed to find user: ${loginDto.email}`,
+					title: 'User Lookup Failed',
+				})
+			);
+
 		if (!user) {
 			throw new UnauthorizedException('Invalid credentials');
 		}
+
 		// Verify password
 		const isPasswordValid = await bcrypt.compare(
 			loginDto.password,
@@ -87,7 +114,7 @@ export class AuthService {
 
 	private generateToken(user: User): string {
 		const payload = {
-			sub: user.uuid,
+			sub: user.id,
 			email: user.email,
 			role: user.role,
 		};
@@ -95,7 +122,17 @@ export class AuthService {
 		return this.jwtService.sign(payload);
 	}
 
-	async validateUser(userId: string): Promise<User | null> {
-		return this.userRepository.findOne({ where: { uuid: userId } });
+	async validateUser(userId: number): Promise<User | null> {
+		return await this.userRepository
+			.findOne({ where: { id: userId } })
+			.catch((error) =>
+				errorHandler(error, {
+					filePath: 'backend/src/auth/auth.service.ts',
+					functionName: 'validateUser',
+					errorStatusObject: UnauthorizedException,
+					message: `Failed to validate user: ${userId}`,
+					title: 'User Validation Failed',
+				})
+			);
 	}
 }

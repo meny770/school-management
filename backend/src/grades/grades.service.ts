@@ -1,4 +1,8 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import {
+	Injectable,
+	NotFoundException,
+	BadRequestException,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Grade } from './entities/grade.entity';
@@ -10,6 +14,7 @@ import {
 	CreateCommentTemplateDto,
 	GetGradesQueryDto,
 } from './dto';
+import { errorHandler } from '../utils';
 
 @Injectable()
 export class GradesService {
@@ -28,17 +33,33 @@ export class GradesService {
 		createGradeDto: CreateGradeDto,
 		teacherId: string
 	): Promise<Grade> {
-		const teacher = await this.userRepository.findOne({
-			where: { uuid: teacherId },
-		});
+		const teacher = await this.userRepository
+			.findOne({ where: { uuid: teacherId } })
+			.catch((error) =>
+				errorHandler(error, {
+					filePath: 'backend/src/grades/grades.service.ts',
+					functionName: 'createGrade',
+					errorStatusObject: NotFoundException,
+					message: `Teacher not found: ${teacherId}`,
+					title: 'Teacher Lookup Failed',
+				})
+			);
 
 		if (!teacher) {
 			throw new NotFoundException(`Teacher with ID "${teacherId}" not found`);
 		}
 
-		const student = await this.studentRepository.findOne({
-			where: { uuid: createGradeDto.studentId },
-		});
+		const student = await this.studentRepository
+			.findOne({ where: { uuid: createGradeDto.studentId } })
+			.catch((error) =>
+				errorHandler(error, {
+					filePath: 'backend/src/grades/grades.service.ts',
+					functionName: 'createGrade',
+					errorStatusObject: NotFoundException,
+					message: `Student not found: ${createGradeDto.studentId}`,
+					title: 'Student Lookup Failed',
+				})
+			);
 
 		if (!student) {
 			throw new NotFoundException(
@@ -55,7 +76,15 @@ export class GradesService {
 				: undefined,
 		});
 
-		return this.gradeRepository.save(grade);
+		return await this.gradeRepository.save(grade).catch((error) =>
+			errorHandler(error, {
+				filePath: 'backend/src/grades/grades.service.ts',
+				functionName: 'createGrade',
+				errorStatusObject: BadRequestException,
+				message: `Failed to save grade for student ${createGradeDto.studentId} in subject ${createGradeDto.subject}`,
+				title: 'Grade Creation Failed',
+			})
+		);
 	}
 
 	async findGrades(query: GetGradesQueryDto): Promise<Grade[]> {
@@ -65,17 +94,12 @@ export class GradesService {
 			.leftJoinAndSelect('grade.teacher', 'teacher');
 
 		if (query.studentId) {
-			// Assuming query.studentId is UUID
 			queryBuilder.andWhere('student.uuid = :studentId', {
 				studentId: query.studentId,
 			});
 		}
 
 		if (query.classId) {
-			// Assuming query.classId is UUID (if we changed Class ID to UUID)
-			// But wait, Class ID is also refactored.
-			// So we need to join class and check uuid.
-			// Student has class relation.
 			queryBuilder
 				.leftJoin('student.class', 'class')
 				.andWhere('class.uuid = :classId', {
@@ -89,7 +113,17 @@ export class GradesService {
 			});
 		}
 
-		return queryBuilder.orderBy('grade.date', 'DESC').getMany();
+		return await queryBuilder
+			.orderBy('grade.date', 'DESC')
+			.getMany()
+			.catch((error) =>
+				errorHandler(error, {
+					filePath: 'backend/src/grades/grades.service.ts',
+					functionName: 'findGrades',
+					message: `Failed to fetch grades with filters: ${JSON.stringify(query)}`,
+					title: 'Grades Query Failed',
+				})
+			);
 	}
 
 	// Comment Templates
@@ -99,19 +133,42 @@ export class GradesService {
 		const template = this.commentTemplateRepository.create(
 			createCommentTemplateDto
 		);
-		return this.commentTemplateRepository.save(template);
+		return await this.commentTemplateRepository.save(template).catch((error) =>
+			errorHandler(error, {
+				filePath: 'backend/src/grades/grades.service.ts',
+				functionName: 'createCommentTemplate',
+				errorStatusObject: BadRequestException,
+				message: `Failed to create comment template: ${createCommentTemplateDto.category}`,
+				title: 'Comment Template Creation Failed',
+			})
+		);
 	}
 
 	async findAllCommentTemplates(): Promise<CommentTemplate[]> {
-		return this.commentTemplateRepository.find({
-			order: { category: 'ASC', text: 'ASC' },
-		});
+		return await this.commentTemplateRepository
+			.find({ order: { category: 'ASC', text: 'ASC' } })
+			.catch((error) =>
+				errorHandler(error, {
+					filePath: 'backend/src/grades/grades.service.ts',
+					functionName: 'findAllCommentTemplates',
+					message: 'Failed to fetch comment templates',
+					title: 'Comment Templates Query Failed',
+				})
+			);
 	}
 
 	async findCommentTemplateById(id: string): Promise<CommentTemplate> {
-		const template = await this.commentTemplateRepository.findOne({
-			where: { uuid: id },
-		});
+		const template = await this.commentTemplateRepository
+			.findOne({ where: { uuid: id } })
+			.catch((error) =>
+				errorHandler(error, {
+					filePath: 'backend/src/grades/grades.service.ts',
+					functionName: 'findCommentTemplateById',
+					errorStatusObject: NotFoundException,
+					message: `Failed to find comment template: ${id}`,
+					title: 'Comment Template Lookup Failed',
+				})
+			);
 
 		if (!template) {
 			throw new NotFoundException(`Comment template with ID ${id} not found`);
@@ -122,6 +179,14 @@ export class GradesService {
 
 	async deleteCommentTemplate(id: string): Promise<void> {
 		const template = await this.findCommentTemplateById(id);
-		await this.commentTemplateRepository.delete(template.id);
+		await this.commentTemplateRepository.delete(template.id).catch((error) =>
+			errorHandler(error, {
+				filePath: 'backend/src/grades/grades.service.ts',
+				functionName: 'deleteCommentTemplate',
+				errorStatusObject: BadRequestException,
+				message: `Failed to delete comment template: ${id}`,
+				title: 'Comment Template Deletion Failed',
+			})
+		);
 	}
 }
